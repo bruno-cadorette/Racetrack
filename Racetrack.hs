@@ -1,7 +1,7 @@
 import Data.Serialize
 import qualified Data.ByteString.Char8 as BStr
 import Text.Read(readMaybe)
-import RacetrackGameData  
+import RacetrackGameData
 
 zipT :: (a -> b -> c) -> (a, a) -> (b, b) -> (c, c)
 zipT f (x,y) (x', y') = (f x x',f y y')
@@ -23,7 +23,7 @@ updatePlayer player newVelocity = player { position = newPosition, velocity = ne
          
 playerInput :: Player -> IO Player
 playerInput player = do
-    velo' <- safeGetLine $ "You must type a tuple like this one " ++ (show $ velocity player)
+    velo' <- safeGetLine $ "You must type a tuple like this one " ++ show (velocity player)
     if uncurry (&&) $ zipT verify (velocity player) velo' then
         return $ updatePlayer player velo' 
     else do
@@ -42,15 +42,13 @@ playGame allPlayers game = play allPlayers
             print current
             putStrLn $ prettyGameOutput players game
             current' <- playerInput current
-            if playerIsInValidState current' $ gameBoard game then
+            if playerIsInValidState current' game then
                 if isCrossingTheLine (finishLine game) (position current) (position current') then
                     putStrLn $ "Player " ++ show (playerId current) ++ " won the game!"
                 else
                     play (nexts ++ [current'])
             else
                 putStrLn "Game over"
-                
-
 
 safeGetLine :: (Read a) => String ->  IO a
 safeGetLine errorMessage = do 
@@ -61,7 +59,6 @@ safeGetLine errorMessage = do
             putStrLn errorMessage
             safeGetLine errorMessage
 
-            
 main :: IO()
 main = do
     decodedGame <- fmap decode $ BStr.readFile "game1.txt"
@@ -69,4 +66,4 @@ main = do
     n <- safeGetLine "You must specify a number"
     case decodedGame of
         Left err -> putStrLn err
-        Right game -> playGame (map (\i -> Player (startPosition game) (0,0) i) [0..n]) game
+        Right game -> playGame (map (Player (startPosition game) (0,0)) [0..n]) game
